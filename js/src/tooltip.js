@@ -4,7 +4,7 @@ import Util from './util'
 
 /**
  * --------------------------------------------------------------------------
- * Bootstrap (v4.0.0): tooltip.js
+ * Bootstrap (v4.1.3): tooltip.js
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
  * --------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@ const Tooltip = (($) => {
    */
 
   const NAME               = 'tooltip'
-  const VERSION            = '4.0.0'
+  const VERSION            = '4.1.3'
   const DATA_KEY           = 'bs.tooltip'
   const EVENT_KEY          = `.${DATA_KEY}`
   const JQUERY_NO_CONFLICT = $.fn[NAME]
@@ -273,7 +273,7 @@ const Tooltip = (($) => {
         const attachment = this._getAttachment(placement)
         this.addAttachmentClass(attachment)
 
-        const container = this.config.container === false ? document.body : $(this.config.container)
+        const container = this.config.container === false ? document.body : $(document).find(this.config.container)
 
         $(tip).data(this.constructor.DATA_KEY, this)
 
@@ -333,7 +333,7 @@ const Tooltip = (($) => {
           }
         }
 
-        if (Util.supportsTransitionEnd() && $(this.tip).hasClass(ClassName.FADE)) {
+        if ($(this.tip).hasClass(ClassName.FADE)) {
           const transitionDuration = Util.getTransitionDurationFromElement(this.tip)
 
           $(this.tip)
@@ -383,8 +383,7 @@ const Tooltip = (($) => {
       this._activeTrigger[Trigger.FOCUS] = false
       this._activeTrigger[Trigger.HOVER] = false
 
-      if (Util.supportsTransitionEnd() &&
-          $(this.tip).hasClass(ClassName.FADE)) {
+      if ($(this.tip).hasClass(ClassName.FADE)) {
         const transitionDuration = Util.getTransitionDurationFromElement(tip)
 
         $(tip)
@@ -419,9 +418,9 @@ const Tooltip = (($) => {
     }
 
     setContent() {
-      const $tip = $(this.getTipElement())
-      this.setElementContent($tip.find(Selector.TOOLTIP_INNER), this.getTitle())
-      $tip.removeClass(`${ClassName.FADE} ${ClassName.SHOW}`)
+      const tip = this.getTipElement()
+      this.setElementContent($(tip.querySelectorAll(Selector.TOOLTIP_INNER)), this.getTitle())
+      $(tip).removeClass(`${ClassName.FADE} ${ClassName.SHOW}`)
     }
 
     setElementContent($element, content) {
@@ -612,7 +611,7 @@ const Tooltip = (($) => {
       config = {
         ...this.constructor.Default,
         ...$(this.element).data(),
-        ...config
+        ...typeof config === 'object' && config ? config : {}
       }
 
       if (typeof config.delay === 'number') {
@@ -656,14 +655,16 @@ const Tooltip = (($) => {
     _cleanTipClass() {
       const $tip = $(this.getTipElement())
       const tabClass = $tip.attr('class').match(BSCLS_PREFIX_REGEX)
-      if (tabClass !== null && tabClass.length > 0) {
+      if (tabClass !== null && tabClass.length) {
         $tip.removeClass(tabClass.join(''))
       }
     }
 
-    _handlePopperPlacementChange(data) {
+    _handlePopperPlacementChange(popperData) {
+      const popperInstance = popperData.instance
+      this.tip = popperInstance.popper
       this._cleanTipClass()
-      this.addAttachmentClass(this._getAttachment(data.placement))
+      this.addAttachmentClass(this._getAttachment(popperData.placement))
     }
 
     _fixTransition() {
@@ -713,7 +714,7 @@ const Tooltip = (($) => {
 
   $.fn[NAME] = Tooltip._jQueryInterface
   $.fn[NAME].Constructor = Tooltip
-  $.fn[NAME].noConflict = function () {
+  $.fn[NAME].noConflict = () => {
     $.fn[NAME] = JQUERY_NO_CONFLICT
     return Tooltip._jQueryInterface
   }
